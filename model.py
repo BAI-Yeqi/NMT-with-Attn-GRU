@@ -6,6 +6,16 @@ email: yeqi001@ntu.edu.sg
 '''
 
 
+import torch
+import torch.nn as nn
+from torch import optim
+import torch.nn.functional as F
+from dataset import MAX_LENGTH
+
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
 class EncoderRNN(nn.Module):
     def __init__(self, input_size, hidden_size):
         super(EncoderRNN, self).__init__()
