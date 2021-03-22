@@ -20,13 +20,15 @@ def timeSince(since, percent):
     return '%s (- %s)' % (asMinutes(s), asMinutes(rs))
 
 
-def showPlot(points):
+def showPlot(points, save_path=None):
     plt.figure()
     fig, ax = plt.subplots()
     # this locator puts ticks at regular intervals
     loc = ticker.MultipleLocator(base=0.2)
     ax.yaxis.set_major_locator(loc)
     plt.plot(points)
+    if save_path:
+        plt.savefig(save_path)
 
 
 demo_french_sentences = [
@@ -35,4 +37,3 @@ demo_french_sentences = [
     "je ne crains pas de mourir .",
     "c est un jeune directeur plein de talent ."
 ]
-    

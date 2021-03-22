@@ -7,15 +7,20 @@ email: yeqi001@ntu.edu.sg
 
 
 import torch
+import os
 import random
+import numpy as np
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')
 import matplotlib.ticker as ticker
-import numpy as np
-from dataset import MAX_LENGTH
+from dataset import MAX_LENGTH, SOS_token, EOS_token
+from trainer import tensorFromSentence
+from utils import demo_french_sentences
+from model import device
 
 
-def evaluate(encoder, decoder, sentence, max_length=MAX_LENGTH):
+def evaluate(encoder, decoder, sentence, 
+             input_lang, output_lang, max_length=MAX_LENGTH):
     with torch.no_grad():
         input_tensor = tensorFromSentence(input_lang, sentence)
         input_length = input_tensor.size()[0]
@@ -51,12 +56,15 @@ def evaluate(encoder, decoder, sentence, max_length=MAX_LENGTH):
         return decoded_words, decoder_attentions[:di + 1]
 
 
-def evaluateRandomly(encoder, decoder, n=10):
+def evaluateRandomly(encoder, decoder, pairs,
+                     input_lang, output_lang, n=10):
     for i in range(n):
         pair = random.choice(pairs)
         print('>', pair[0])
         print('=', pair[1])
-        output_words, attentions = evaluate(encoder, decoder, pair[0])
+        output_words, attentions = evaluate(
+            encoder, decoder, pair[0], 
+            input_lang, output_lang)
         output_sentence = ' '.join(output_words)
         print('<', output_sentence)
         print('')
@@ -68,7 +76,8 @@ def visAttention():
     plt.matshow(attentions.numpy())
 
 
-def showAttention(input_sentence, output_words, attentions):
+def showAttention(input_sentence, output_words, attentions, 
+                  save_path, show=False):
     # Set up figure with colorbar
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -83,13 +92,27 @@ def showAttention(input_sentence, output_words, attentions):
     # Show label at every tick
     ax.xaxis.set_major_locator(ticker.MultipleLocator(1))
     ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
+    plt.savefig(save_path)
+    if show:
+        plt.show()
 
-    plt.show()
 
-
-def evaluateAndShowAttention(input_sentence, encoder, attn_decoder):
+def evaluateAndShowAttention(input_sentence, encoder, 
+                             attn_decoder, save_path,
+                             input_lang, output_lang):
     output_words, attentions = evaluate(
-        encoder, attn_decoder, input_sentence)
+        encoder, attn_decoder, input_sentence,
+        input_lang, output_lang)
     print('input =', input_sentence)
     print('output =', ' '.join(output_words))
-    showAttention(input_sentence, output_words, attentions)
+    showAttention(input_sentence, output_words, attentions, save_path)
+    
+
+def evalAndShowAttns(encoder, attn_decoder, output_dir, 
+                     input_lang, output_lang):
+    os.makedirs(output_dir, exist_ok=True)
+    for i, sentence in enumerate(demo_french_sentences):
+        save_path = os.path.join(output_dir, '{}.png'.format(i))
+        evaluateAndShowAttention(
+            sentence, encoder, attn_decoder, save_path,
+            input_lang, output_lang)

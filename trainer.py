@@ -9,6 +9,7 @@ email: yeqi001@ntu.edu.sg
 import torch
 import torch.nn as nn
 from torch import optim
+import os
 import time
 import random
 from dataset import MAX_LENGTH, SOS_token, EOS_token
@@ -123,4 +124,7 @@ def trainIters(encoder, decoder, n_iters, pairs,
             plot_losses.append(plot_loss_avg)
             plot_loss_total = 0
 
-    showPlot(plot_losses)
+    showPlot(
+        plot_losses, 
+        os.path.join('./output', 'loss.png')
+    )
