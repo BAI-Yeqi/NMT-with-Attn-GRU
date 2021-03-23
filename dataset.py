@@ -29,16 +29,27 @@ eng_prefixes = (
 
 
 class Lang:
-    def __init__(self, name):
+    def __init__(self, name, use_char=True):
         self.name = name
+        # Word Utils
         self.word2index = {}
         self.word2count = {}
         self.index2word = {0: "SOS", 1: "EOS"}
         self.n_words = 2  # Count SOS and EOS
+        # Character Utils
+        self.use_char = use_char
+        if self.use_char:
+            self.char2index = {"PAD": 0, "EOS": -1, "SOS": -2}
+            self.char2count = {"PAD": 0, "EOS": -1, "SOS": -2}
+            self.index2char = {0: "PAD", -1: "EOS", -2: "EOS"}
+            self.n_chars = 3
 
     def addSentence(self, sentence):
         for word in sentence.split(' '):
             self.addWord(word)
+            if self.use_char:
+                for char in word:
+                    self.addChar(char)
 
     def addWord(self, word):
         if word not in self.word2index:
@@ -48,6 +59,15 @@ class Lang:
             self.n_words += 1
         else:
             self.word2count[word] += 1
+
+    def addChar(self, char):
+        if char not in self.char2index:
+            self.char2index[char] = self.n_chars
+            self.char2count[char] = 1
+            self.index2char[self.n_chars] = char
+            self.n_chars += 1
+        else:
+            self.char2count[char] += 1
 
 
 def unicodeToAscii(s):
@@ -118,5 +138,22 @@ def prepareData(lang1, lang2, reverse=False):
 
 
 if __name__ == '__main__':
+    # Unit test
+    import torch
+    import numpy as np
+    from trainer import charIndexsFromSentence, tensorsFromPair
+
     input_lang, output_lang, pairs = prepareData('eng', 'fra', True)
-    print(random.choice(pairs))
+    print('input_lang.char2index:', input_lang.char2index)
+    print('output_lang.char2index:', output_lang.char2index)
+    pair = random.choice(pairs)
+    print(pair)
+    seq_char_ids = charIndexsFromSentence(input_lang, pair[0])
+    #seq_char_ids = np.array(seq_char_ids)
+    seq_char_ids = torch.tensor(seq_char_ids, dtype=torch.long)
+    print(seq_char_ids, seq_char_ids.shape)
+    input_tensor, input_char_tensor, target_tensor = \
+        tensorsFromPair(pair, input_lang, output_lang, input_use_char=True)
+    print(input_tensor.shape, 
+          input_char_tensor.shape, 
+          target_tensor.shape)

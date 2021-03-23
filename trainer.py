@@ -17,20 +17,65 @@ from utils import timeSince, showPlot
 from model import device
 
 
-def indexesFromSentence(lang, sentence):
-    return [lang.word2index[word] for word in sentence.split(' ')]
+def charIndexsFromSentence(lang, sentence):
+    max_word_len = 0
+    seq_char_ids = []
+    for word in sentence.split(' '):
+        word_len = len(word)
+        char_ids = []
+        if word_len > max_word_len:
+            max_word_len = word_len
+        for char in word:
+            char_id = lang.char2index[char]
+            char_ids.append(char_id)
+        seq_char_ids.append(char_ids)
+    seq_char_ids.append([lang.char2index['EOS']])
+    for i, char_ids in enumerate(seq_char_ids):
+        if len(char_ids) < max_word_len:
+            pad_len = max_word_len - len(char_ids)
+            padding = [lang.char2index['PAD']] * pad_len
+            seq_char_ids[i] = seq_char_ids[i] + padding
+    return seq_char_ids
 
 
-def tensorFromSentence(lang, sentence):
-    indexes = indexesFromSentence(lang, sentence)
-    indexes.append(EOS_token)
-    return torch.tensor(indexes, dtype=torch.long, device=device).view(-1, 1)
+def indexesFromSentence(lang, sentence, use_char=False):
+    word_ids = [lang.word2index[word] for word in sentence.split(' ')]
+    if use_char:
+        char_ids = charIndexsFromSentence(lang, sentence)
+        return word_ids, char_ids
+    else:
+        return word_ids
 
 
-def tensorsFromPair(pair, input_lang, output_lang):
-    input_tensor = tensorFromSentence(input_lang, pair[0])
+def tensorFromSentence(lang, sentence, use_char=False):
+    if use_char:
+        word_ids, char_ids = indexesFromSentence(
+            lang, sentence, use_char)
+        char_tensor = torch.tensor(
+            char_ids, dtype=torch.long, device=device)
+    else:
+        word_ids = indexesFromSentence(lang, sentence)
+    word_ids.append(EOS_token)
+    word_tensor = torch.tensor(
+        word_ids, dtype=torch.long, device=device
+    ).view(-1, 1)
+    if use_char:
+        return word_tensor, char_tensor
+    else:
+        return word_tensor
+
+
+def tensorsFromPair(pair, input_lang, output_lang, input_use_char=False):
+    if input_use_char:
+        input_tensor, input_char_tensor = \
+            tensorFromSentence(input_lang, pair[0], input_use_char)
+    else:
+        input_tensor = tensorFromSentence(input_lang, pair[0], input_use_char)
     target_tensor = tensorFromSentence(output_lang, pair[1])
-    return (input_tensor, target_tensor)
+    if input_use_char:
+        return (input_tensor, input_char_tensor, target_tensor)
+    else:
+        return (input_tensor, target_tensor)
 
 
 def train(input_tensor, target_tensor, encoder, decoder, 
@@ -124,6 +169,7 @@ def trainIters(encoder, decoder, n_iters, pairs,
             plot_losses.append(plot_loss_avg)
             plot_loss_total = 0
 
+    os.makedirs('./output', exist_ok=True)
     showPlot(
         plot_losses, 
         os.path.join('./output', 'loss.png')
