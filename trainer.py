@@ -80,7 +80,8 @@ def tensorsFromPair(pair, input_lang, output_lang, input_use_char=False):
 
 def train(input_tensor, target_tensor, encoder, decoder, 
           encoder_optimizer, decoder_optimizer, criterion, 
-          max_length=MAX_LENGTH, teacher_forcing_ratio=0.5):
+          max_length=MAX_LENGTH, teacher_forcing_ratio=0.5,
+          input_char_tensor=None):
     encoder_hidden = encoder.initHidden()
 
     encoder_optimizer.zero_grad()
@@ -95,8 +96,13 @@ def train(input_tensor, target_tensor, encoder, decoder,
     loss = 0
 
     for ei in range(input_length):
-        encoder_output, encoder_hidden = encoder(
-            input_tensor[ei], encoder_hidden)
+        if input_char_tensor:
+            encoder_output, encoder_hidden = encoder(
+                input_tensor[ei], input_char_tensor[ei],
+                encoder_hidden)
+        else:
+            encoder_output, encoder_hidden = encoder(
+                input_tensor[ei], encoder_hidden)                
         encoder_outputs[ei] = encoder_output[0, 0]
 
     decoder_input = torch.tensor([[SOS_token]], device=device)
@@ -134,9 +140,10 @@ def train(input_tensor, target_tensor, encoder, decoder,
     return loss.item() / target_length
 
 
-def trainIters(encoder, decoder, n_iters, pairs, 
-               input_lang, output_lang, print_every=1000, 
-               plot_every=100, learning_rate=0.01):
+def trainIters(encoder, decoder, n_iters, pairs,
+               input_lang, output_lang, print_every=1000,
+               plot_every=100, learning_rate=0.01,
+               input_use_char=False):
     start = time.time()
     plot_losses = []
     print_loss_total = 0  # Reset every print_every
@@ -144,17 +151,21 @@ def trainIters(encoder, decoder, n_iters, pairs,
 
     encoder_optimizer = optim.SGD(encoder.parameters(), lr=learning_rate)
     decoder_optimizer = optim.SGD(decoder.parameters(), lr=learning_rate)
-    training_pairs = [tensorsFromPair(random.choice(pairs), input_lang, output_lang)
+    training_pairs = [tensorsFromPair(random.choice(pairs), input_lang, 
+                                      output_lang, input_use_char)
                       for i in range(n_iters)]
     criterion = nn.NLLLoss()
 
     for iter in range(1, n_iters + 1):
         training_pair = training_pairs[iter - 1]
-        input_tensor = training_pair[0]
-        target_tensor = training_pair[1]
+        if input_use_char:
+            input_tensor, target_tensor = training_pair
+        else:
+            input_tensor, input_char_tensor, target_tensor = training_pair
 
         loss = train(input_tensor, target_tensor, encoder,
-                     decoder, encoder_optimizer, decoder_optimizer, criterion)
+                     decoder, encoder_optimizer, decoder_optimizer,
+                     criterion, input_char_tensor=input_char_tensor)
         print_loss_total += loss
         plot_loss_total += loss
 
