@@ -20,17 +20,27 @@ from model import device
 
 
 def evaluate(encoder, decoder, sentence, 
-             input_lang, output_lang, max_length=MAX_LENGTH):
+             input_lang, output_lang, max_length=MAX_LENGTH,
+             input_use_char=False):
     with torch.no_grad():
-        input_tensor = tensorFromSentence(input_lang, sentence)
+        if input_use_char:
+            input_tensor, input_char_tensor = tensorFromSentence(
+                input_lang, sentence, input_use_char)
+        else:
+            input_tensor = tensorFromSentence(
+                input_lang, sentence, input_use_char)
         input_length = input_tensor.size()[0]
         encoder_hidden = encoder.initHidden()
 
         encoder_outputs = torch.zeros(max_length, encoder.hidden_size, device=device)
 
         for ei in range(input_length):
-            encoder_output, encoder_hidden = encoder(input_tensor[ei],
-                                                     encoder_hidden)
+            if input_use_char:
+                encoder_output, encoder_hidden = encoder(
+                    input_tensor[ei], input_char_tensor[ei], encoder_hidden)
+            else:
+                encoder_output, encoder_hidden = encoder(
+                    input_tensor[ei], encoder_hidden)
             encoder_outputs[ei] += encoder_output[0, 0]
 
         decoder_input = torch.tensor([[SOS_token]], device=device)  # SOS
@@ -57,14 +67,16 @@ def evaluate(encoder, decoder, sentence,
 
 
 def evaluateRandomly(encoder, decoder, pairs,
-                     input_lang, output_lang, n=10):
+                     input_lang, output_lang, n=10,
+                     input_use_char=False):
     for i in range(n):
         pair = random.choice(pairs)
         print('>', pair[0])
         print('=', pair[1])
         output_words, attentions = evaluate(
             encoder, decoder, pair[0], 
-            input_lang, output_lang)
+            input_lang, output_lang,
+            input_use_char=input_use_char)
         output_sentence = ' '.join(output_words)
         print('<', output_sentence)
         print('')
@@ -99,20 +111,21 @@ def showAttention(input_sentence, output_words, attentions,
 
 def evaluateAndShowAttention(input_sentence, encoder, 
                              attn_decoder, save_path,
-                             input_lang, output_lang):
+                             input_lang, output_lang,
+                             input_use_char=False):
     output_words, attentions = evaluate(
         encoder, attn_decoder, input_sentence,
-        input_lang, output_lang)
+        input_lang, output_lang, input_use_char=input_use_char)
     print('input =', input_sentence)
     print('output =', ' '.join(output_words))
     showAttention(input_sentence, output_words, attentions, save_path)
     
 
 def evalAndShowAttns(encoder, attn_decoder, output_dir, 
-                     input_lang, output_lang):
+                     input_lang, output_lang, input_use_char=False):
     os.makedirs(output_dir, exist_ok=True)
     for i, sentence in enumerate(demo_french_sentences):
         save_path = os.path.join(output_dir, '{}.png'.format(i))
         evaluateAndShowAttention(
             sentence, encoder, attn_decoder, save_path,
-            input_lang, output_lang)
+            input_lang, output_lang, input_use_char=input_use_char)

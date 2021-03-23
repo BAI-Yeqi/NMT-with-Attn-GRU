@@ -39,9 +39,9 @@ class Lang:
         # Character Utils
         self.use_char = use_char
         if self.use_char:
-            self.char2index = {"PAD": 0, "EOS": -1, "SOS": -2}
-            self.char2count = {"PAD": 0, "EOS": -1, "SOS": -2}
-            self.index2char = {0: "PAD", -1: "EOS", -2: "EOS"}
+            self.char2index = {"PAD": 0, "EOS": 1, "SOS": 2}
+            self.char2count = {"PAD": 0, "EOS": 1, "SOS": 2}
+            self.index2char = {0: "PAD", 1: "EOS", 2: "SOS"}
             self.n_chars = 3
 
     def addSentence(self, sentence):

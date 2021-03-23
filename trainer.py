@@ -96,7 +96,7 @@ def train(input_tensor, target_tensor, encoder, decoder,
     loss = 0
 
     for ei in range(input_length):
-        if input_char_tensor:
+        if input_char_tensor is not None:
             encoder_output, encoder_hidden = encoder(
                 input_tensor[ei], input_char_tensor[ei],
                 encoder_hidden)
@@ -143,7 +143,7 @@ def train(input_tensor, target_tensor, encoder, decoder,
 def trainIters(encoder, decoder, n_iters, pairs,
                input_lang, output_lang, print_every=1000,
                plot_every=100, learning_rate=0.01,
-               input_use_char=False):
+               input_use_char=False, output_dir='output'):
     start = time.time()
     plot_losses = []
     print_loss_total = 0  # Reset every print_every
@@ -158,8 +158,9 @@ def trainIters(encoder, decoder, n_iters, pairs,
 
     for iter in range(1, n_iters + 1):
         training_pair = training_pairs[iter - 1]
-        if input_use_char:
+        if not input_use_char:
             input_tensor, target_tensor = training_pair
+            input_char_tensor = None
         else:
             input_tensor, input_char_tensor, target_tensor = training_pair
 
@@ -180,8 +181,8 @@ def trainIters(encoder, decoder, n_iters, pairs,
             plot_losses.append(plot_loss_avg)
             plot_loss_total = 0
 
-    os.makedirs('./output', exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
     showPlot(
         plot_losses, 
-        os.path.join('./output', 'loss.png')
+        os.path.join(output_dir, 'loss.png')
     )
