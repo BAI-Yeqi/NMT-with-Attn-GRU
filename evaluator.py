@@ -159,3 +159,13 @@ def evalAndShowAttns(encoder, attn_decoder, output_dir,
         evaluateAndShowAttention(
             sentence, encoder, attn_decoder, save_path,
             input_lang, output_lang, input_use_char=input_use_char)
+
+
+def load_model(encoder, decoder, output_dir):
+    encoder_ckpt = os.path.join(output_dir, 'encoder.ckpt')
+    decoder_ckpt = os.path.join(output_dir, 'decoder.ckpt')
+    encoder.load_state_dict(torch.load(encoder_ckpt))
+    encoder.eval()
+    decoder.load_state_dict(torch.load(decoder_ckpt))
+    decoder.eval()
+    return encoder, decoder

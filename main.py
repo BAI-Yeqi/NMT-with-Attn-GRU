@@ -12,7 +12,7 @@ import argparse
 from dataset import prepareData
 from model import EncoderRNN, AttnDecoderRNN, device
 from trainer import trainIters
-from evaluator import evaluateBLEU, evalAndShowAttns
+from evaluator import evaluateBLEU, evalAndShowAttns, load_model
 
 
 def main(args):
@@ -26,12 +26,16 @@ def main(args):
     ).to(device)
     attn_decoder1 = AttnDecoderRNN(
         hidden_size, output_lang.n_words, dropout_p=0.1).to(device)
-    trainIters(
-        encoder1, attn_decoder1, args.train_steps, train_pairs,
-        input_lang, output_lang, print_every=5000,
-        input_use_char=input_use_char,
-        output_dir=args.output_dir
-    )
+    if not args.eval_mode:
+        trainIters(
+            encoder1, attn_decoder1, args.train_steps, train_pairs,
+            input_lang, output_lang, print_every=5000,
+            input_use_char=input_use_char,
+            output_dir=args.output_dir)
+    else:
+        # Skip training, load pre-trained weights
+        encoder1, attn_decoder1 = load_model(
+            encoder1, attn_decoder1, args.output_dir)
     evaluateBLEU(
         encoder1, attn_decoder1, test_pairs,
         input_lang, output_lang,
@@ -53,6 +57,8 @@ def parse_args():
                         help='dimension of word encoder')
     parser.add_argument('--train_steps', type=int, default=75000,
                         help='number of training steps')
+    parser.add_argument('--eval_mode', default=False,
+                        action='store_true')
     parser.add_argument('--output_dir', type=str, default='',
                         help='placeholder, do not modify')
     args = parser.parse_args()

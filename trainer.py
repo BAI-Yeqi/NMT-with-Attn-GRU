@@ -155,6 +155,8 @@ def trainIters(encoder, decoder, n_iters, pairs,
                                       output_lang, input_use_char)
                       for i in range(n_iters)]
     criterion = nn.NLLLoss()
+    encoder.train()
+    decoder.train()
 
     for iter in range(1, n_iters + 1):
         training_pair = training_pairs[iter - 1]
