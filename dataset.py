@@ -12,6 +12,7 @@ import unicodedata
 import string
 import re
 import random
+from sklearn.model_selection import train_test_split
 
 
 SOS_token = 0
@@ -134,7 +135,12 @@ def prepareData(lang1, lang2, reverse=False):
     print("Counted words:")
     print(input_lang.name, input_lang.n_words)
     print(output_lang.name, output_lang.n_words)
-    return input_lang, output_lang, pairs
+    train_pairs, test_pairs = train_test_split(
+        pairs, test_size=0.20, random_state=1234)
+    print('{} utterances in total'.format(len(pairs)))
+    print('{} utterances in training set'.format(len(train_pairs)))
+    print('{} utterances in test set'.format(len(test_pairs)))
+    return input_lang, output_lang, train_pairs, test_pairs
 
 
 if __name__ == '__main__':
@@ -143,10 +149,10 @@ if __name__ == '__main__':
     import numpy as np
     from trainer import charIndexsFromSentence, tensorsFromPair
 
-    input_lang, output_lang, pairs = prepareData('eng', 'fra', True)
+    input_lang, output_lang, train_pairs, test_pairs = prepareData('eng', 'fra', True)
     print('input_lang.char2index:', input_lang.char2index)
     print('output_lang.char2index:', output_lang.char2index)
-    pair = random.choice(pairs)
+    pair = random.choice(train_pairs)
     print(pair)
     seq_char_ids = charIndexsFromSentence(input_lang, pair[0])
     #seq_char_ids = np.array(seq_char_ids)

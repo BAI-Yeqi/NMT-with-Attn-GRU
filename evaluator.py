@@ -13,6 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')
 import matplotlib.ticker as ticker
+from nltk.translate.bleu_score import sentence_bleu
 from dataset import MAX_LENGTH, SOS_token, EOS_token
 from trainer import tensorFromSentence
 from utils import demo_french_sentences
@@ -78,9 +79,38 @@ def evaluateRandomly(encoder, decoder, pairs,
             input_lang, output_lang,
             input_use_char=input_use_char)
         output_sentence = ' '.join(output_words)
+        print('output_words:', output_words)
         print('<', output_sentence)
         print('')
 
+
+def evaluateBLEU(encoder, decoder, pairs,
+                 input_lang, output_lang, n=10,
+                 input_use_char=False, 
+                 print_utterance=False):
+    scores = []
+    for i, pair in enumerate(pairs):
+        gt_words = pair[1].split(' ')
+        output_words, attentions = evaluate(
+            encoder, decoder, pair[0],
+            input_lang, output_lang,
+            input_use_char=input_use_char)
+        output_words= output_words[0:-1]
+        output_sentence = ' '.join(output_words)
+        print('gt_words:', gt_words)
+        print('output_words:', output_words)
+        score = sentence_bleu([gt_words], output_words)
+        scores.append(score)
+        if print_utterance:
+            print('>', pair[0])
+            print('=', pair[1])
+            print('<', output_sentence)
+            print('Instance BLEU Score: {:.2f}'.format(score))
+            print('')
+    avg_score = np.mean(scores)
+    print('Test BLEU Score: {:.2f}'.format(avg_score))
+    return avg_score
+ 
 
 def visAttention():
     output_words, attentions = evaluate(

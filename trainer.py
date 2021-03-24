@@ -186,3 +186,8 @@ def trainIters(encoder, decoder, n_iters, pairs,
         plot_losses, 
         os.path.join(output_dir, 'loss.png')
     )
+    torch.save(
+        encoder.state_dict(), os.path.join(output_dir, 'encoder.ckpt'))
+    torch.save(
+        decoder.state_dict(), os.path.join(output_dir, 'decoder.ckpt'))
+

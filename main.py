@@ -12,11 +12,12 @@ import argparse
 from dataset import prepareData
 from model import EncoderRNN, AttnDecoderRNN, device
 from trainer import trainIters
-from evaluator import evaluateRandomly, evalAndShowAttns
+from evaluator import evaluateBLEU, evalAndShowAttns
 
 
 def main(args):
-    input_lang, output_lang, pairs = prepareData('eng', 'fra', True)
+    input_lang, output_lang, train_pairs, test_pairs = \
+        prepareData('eng', 'fra', True)
     hidden_size = args.word_dim + args.char_dim
     input_use_char = bool(args.char_dim)
     encoder1 = EncoderRNN(
@@ -26,15 +27,16 @@ def main(args):
     attn_decoder1 = AttnDecoderRNN(
         hidden_size, output_lang.n_words, dropout_p=0.1).to(device)
     trainIters(
-        encoder1, attn_decoder1, args.train_steps, pairs,
+        encoder1, attn_decoder1, args.train_steps, train_pairs,
         input_lang, output_lang, print_every=5000,
         input_use_char=input_use_char,
         output_dir=args.output_dir
     )
-    evaluateRandomly(
-        encoder1, attn_decoder1, pairs,
-        input_lang, output_lang, 
-        input_use_char=input_use_char)
+    evaluateBLEU(
+        encoder1, attn_decoder1, test_pairs,
+        input_lang, output_lang,
+        input_use_char=input_use_char,
+        print_utterance=True)
     evalAndShowAttns(
         encoder1, attn_decoder1, args.output_dir,
         input_lang, output_lang,
