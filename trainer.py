@@ -143,7 +143,8 @@ def train(input_tensor, target_tensor, encoder, decoder,
 def trainIters(encoder, decoder, n_iters, pairs,
                input_lang, output_lang, print_every=1000,
                plot_every=100, learning_rate=0.01,
-               input_use_char=False, output_dir='output'):
+               input_use_char=False, output_dir='output',
+               teacher_forcing_ratio=0.5):
     start = time.time()
     plot_losses = []
     print_loss_total = 0  # Reset every print_every
@@ -168,7 +169,8 @@ def trainIters(encoder, decoder, n_iters, pairs,
 
         loss = train(input_tensor, target_tensor, encoder,
                      decoder, encoder_optimizer, decoder_optimizer,
-                     criterion, input_char_tensor=input_char_tensor)
+                     criterion, input_char_tensor=input_char_tensor,
+                     teacher_forcing_ratio=teacher_forcing_ratio)
         print_loss_total += loss
         plot_loss_total += loss
 

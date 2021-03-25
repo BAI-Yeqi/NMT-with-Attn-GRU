@@ -22,7 +22,7 @@ from model import device
 
 def evaluate(encoder, decoder, sentence, 
              input_lang, output_lang, max_length=MAX_LENGTH,
-             input_use_char=False):
+             input_use_char=False, beam_size=1):
     with torch.no_grad():
         if input_use_char:
             input_tensor, input_char_tensor = tensorFromSentence(
@@ -33,6 +33,7 @@ def evaluate(encoder, decoder, sentence,
         input_length = input_tensor.size()[0]
         encoder_hidden = encoder.initHidden()
 
+        # Initialize encoder_outputs as a zero tensor
         encoder_outputs = torch.zeros(max_length, encoder.hidden_size, device=device)
 
         for ei in range(input_length):
@@ -42,6 +43,7 @@ def evaluate(encoder, decoder, sentence,
             else:
                 encoder_output, encoder_hidden = encoder(
                     input_tensor[ei], encoder_hidden)
+            # Append encoder_output
             encoder_outputs[ei] += encoder_output[0, 0]
 
         decoder_input = torch.tensor([[SOS_token]], device=device)  # SOS
@@ -51,19 +53,36 @@ def evaluate(encoder, decoder, sentence,
         decoded_words = []
         decoder_attentions = torch.zeros(max_length, max_length)
 
-        for di in range(max_length):
-            decoder_output, decoder_hidden, decoder_attention = decoder(
-                decoder_input, decoder_hidden, encoder_outputs)
-            decoder_attentions[di] = decoder_attention.data
-            topv, topi = decoder_output.data.topk(1)
-            if topi.item() == EOS_token:
-                decoded_words.append('<EOS>')
-                break
-            else:
-                decoded_words.append(output_lang.index2word[topi.item()])
-
-            decoder_input = topi.squeeze().detach()
-
+        if beam_size <= 1:
+            # Greedy decoding
+            for di in range(max_length):
+                decoder_output, decoder_hidden, decoder_attention = decoder(
+                    decoder_input, decoder_hidden, encoder_outputs)
+                decoder_attentions[di] = decoder_attention.data
+                topv, topi = decoder_output.data.topk(1)
+                if topi.item() == EOS_token:
+                    decoded_words.append('<EOS>')
+                    break
+                else:
+                    decoded_words.append(output_lang.index2word[topi.item()])
+                decoder_input = topi.squeeze().detach()
+        else:
+            # Beam search
+            word_id_seqs = [[]] * beam_size
+            previous_hidden_states = [encoder_hidden] * beam_size
+            # Sum of log probability
+            sum_log_prob = [1.0] * beam_size
+            for di in range(max_length):
+                decoder_output, decoder_hidden, decoder_attention = decoder(
+                    decoder_input, decoder_hidden, encoder_outputs)
+                decoder_attentions[di] = decoder_attention.data
+                topv, topi = decoder_output.data.topk(1)
+                if topi.item() == EOS_token:
+                    decoded_words.append('<EOS>')
+                    break
+                else:
+                    decoded_words.append(output_lang.index2word[topi.item()])
+                decoder_input = topi.squeeze().detach()
         return decoded_words, decoder_attentions[:di + 1]
 
 
@@ -86,15 +105,18 @@ def evaluateRandomly(encoder, decoder, pairs,
 
 def evaluateBLEU(encoder, decoder, pairs,
                  input_lang, output_lang, n=10,
-                 input_use_char=False, 
-                 print_utterance=False):
+                 input_use_char=False, print_utterance=False,
+                 beam_size=1):
+    encoder.eval()
+    decoder.eval()
     scores = []
     for i, pair in enumerate(pairs):
         gt_words = pair[1].split(' ')
         output_words, attentions = evaluate(
             encoder, decoder, pair[0],
             input_lang, output_lang,
-            input_use_char=input_use_char)
+            input_use_char=input_use_char,
+            beam_size=beam_size)
         output_words= output_words[0:-1]
         output_sentence = ' '.join(output_words)
         print('gt_words:', gt_words)
@@ -153,6 +175,8 @@ def evaluateAndShowAttention(input_sentence, encoder,
 
 def evalAndShowAttns(encoder, attn_decoder, output_dir, 
                      input_lang, output_lang, input_use_char=False):
+    encoder.eval()
+    attn_decoder.eval()
     os.makedirs(output_dir, exist_ok=True)
     for i, sentence in enumerate(demo_french_sentences):
         save_path = os.path.join(output_dir, '{}.png'.format(i))

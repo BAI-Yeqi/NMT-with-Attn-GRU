@@ -30,17 +30,16 @@ def main(args):
         trainIters(
             encoder1, attn_decoder1, args.train_steps, train_pairs,
             input_lang, output_lang, print_every=5000,
-            input_use_char=input_use_char,
-            output_dir=args.output_dir)
+            input_use_char=input_use_char, output_dir=args.output_dir,
+            teacher_forcing_ratio=args.teacher_forcing_ratio)
     else:
         # Skip training, load pre-trained weights
         encoder1, attn_decoder1 = load_model(
             encoder1, attn_decoder1, args.output_dir)
     evaluateBLEU(
         encoder1, attn_decoder1, test_pairs,
-        input_lang, output_lang,
-        input_use_char=input_use_char,
-        print_utterance=True)
+        input_lang, output_lang, input_use_char=input_use_char,
+        print_utterance=True, beam_size=args.beam_size)
     evalAndShowAttns(
         encoder1, attn_decoder1, args.output_dir,
         input_lang, output_lang,
@@ -50,7 +49,7 @@ def main(args):
 def parse_args():
     parser = argparse.ArgumentParser(description='NMT Model')
     parser.add_argument('--model_name', type=str, default='baseline',
-                        help='Name of the model')
+                        help='name of the model')
     parser.add_argument('--char_dim', type=int, default=0,
                         help='dimension of char encoder')
     parser.add_argument('--word_dim', type=int, default=256,
@@ -59,8 +58,12 @@ def parse_args():
                         help='number of training steps')
     parser.add_argument('--eval_mode', default=False,
                         action='store_true')
+    parser.add_argument('--beam_size', type=int, default=1,
+                        help='infer with beam search if beam_size > 1')
     parser.add_argument('--output_dir', type=str, default='',
                         help='placeholder, do not modify')
+    parser.add_argument('--teacher_forcing_ratio', type=float, default=0.5,
+                        help='teacher_forcing_ratio')
     args = parser.parse_args()
     os.makedirs('./output', exist_ok=True)
     args.output_dir = os.path.join('./output', args.model_name)
