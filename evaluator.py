@@ -93,7 +93,7 @@ def evaluate(encoder, decoder, sentence,
                 print('beam_sum_log_prob:', beam_sum_log_prob)
                 raise NotImplementedError
             for di in range(1, max_length):
-                debug = True
+                debug = False
                 beam_decoder_outputs = []
                 for b in range(beam_size):
                     decoder_output, decoder_hidden, decoder_attention = decoder(
@@ -133,7 +133,7 @@ def evaluate(encoder, decoder, sentence,
                 if top_word_ids[0].item() == EOS_token:
                     for word_id in beam_word_id_seqs[0]:
                         decoded_words.append(output_lang.index2word[word_id.item()])
-                    return decoded_words, beam_decoder_attentions[0][:di + 1]
+                    break
                 if debug:
                     print('cat_outputs:', cat_outputs.shape)
                     print('topv, topi:', topv, topi)
@@ -146,6 +146,7 @@ def evaluate(encoder, decoder, sentence,
                     print('new_beam_sum_log_prob:', new_beam_sum_log_prob)
                     #if di > 3:
                     #    raise NotImplementedError
+            return decoded_words, beam_decoder_attentions[0][:di + 1]
                 #for b in range(beam_size):
                 #    beam_word_id_seqs[b].append(topi[0, b].squeeze().detach())
                 
@@ -186,9 +187,10 @@ def evaluateBLEU(encoder, decoder, pairs,
         except:
             print('pair[0]:', pair[0])
             err_count = err_count + 1
-            break
             continue
-        output_words= output_words[0:-1]
+        #if output_words[-1] == '<EOS>':
+        #    output_words = output_words[0:-1]
+        output_words = output_words[0:-1]
         output_sentence = ' '.join(output_words)
         print('gt_words:', gt_words)
         print('output_words:', output_words)
