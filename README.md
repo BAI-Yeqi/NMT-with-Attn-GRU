@@ -1,6 +1,13 @@
 # NMT-with-Attn-GRU
 Neural Machine Translation with Attentive GRU
 
+## Environment Setup
+1. In a Python 3.6 environment, install PyTorch according to official website: https://pytorch.org/get-started/locally/
+2. install required packages:
+```
+pip install -r requirements.txt
+```
+
 ## Dataset
 Download data (https://www.manythings.org/anki/):
 ```

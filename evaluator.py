@@ -84,16 +84,7 @@ def evaluate(encoder, decoder, sentence,
                 beam_decoder_attentions[b][0] = decoder_attention.data
                 beam_word_id_seqs[b].append(topi[0, b].squeeze().detach())
                 beam_sum_log_prob[b] = beam_sum_log_prob[b] + topv[0, b].detach()
-            debug = False
-            if debug:
-                print('topv, topi:', topv, topi)
-                print('topi[0, 0]:', topi[0, 0])
-                print('beam_word_id_seqs:', beam_word_id_seqs)
-                print('beam_decoder_attentions:', beam_decoder_attentions)
-                print('beam_sum_log_prob:', beam_sum_log_prob)
-                raise NotImplementedError
             for di in range(1, max_length):
-                debug = False
                 beam_decoder_outputs = []
                 for b in range(beam_size):
                     decoder_output, decoder_hidden, decoder_attention = decoder(
@@ -134,21 +125,7 @@ def evaluate(encoder, decoder, sentence,
                     for word_id in beam_word_id_seqs[0]:
                         decoded_words.append(output_lang.index2word[word_id.item()])
                     break
-                if debug:
-                    print('cat_outputs:', cat_outputs.shape)
-                    print('topv, topi:', topv, topi)
-                    print('vocab_size:', vocab_size)
-                    print('top_beam_ids:', top_beam_ids)
-                    print('top_word_ids:', top_word_ids)
-                    print('new_beam_word_id_seqs:', new_beam_word_id_seqs)
-                    print('new_beam_prev_hidden_states:', new_beam_prev_hidden_states)
-                    print('new_beam_decoder_attentions:', new_beam_decoder_attentions)
-                    print('new_beam_sum_log_prob:', new_beam_sum_log_prob)
-                    #if di > 3:
-                    #    raise NotImplementedError
             return decoded_words, beam_decoder_attentions[0][:di + 1]
-                #for b in range(beam_size):
-                #    beam_word_id_seqs[b].append(topi[0, b].squeeze().detach())
                 
 
 def evaluateRandomly(encoder, decoder, pairs,
