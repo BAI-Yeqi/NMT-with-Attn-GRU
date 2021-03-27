@@ -175,21 +175,13 @@ def evaluateBLEU(encoder, decoder, pairs,
     encoder.eval()
     decoder.eval()
     scores = []
-    err_count = 0
     for i, pair in enumerate(pairs):
         gt_words = pair[1].split(' ')
-        try:
-            output_words, attentions = evaluate(
-                encoder, decoder, pair[0],
-                input_lang, output_lang,
-                input_use_char=input_use_char,
-                beam_size=beam_size)
-        except:
-            print('pair[0]:', pair[0])
-            err_count = err_count + 1
-            continue
-        #if output_words[-1] == '<EOS>':
-        #    output_words = output_words[0:-1]
+        output_words, attentions = evaluate(
+            encoder, decoder, pair[0],
+            input_lang, output_lang,
+            input_use_char=input_use_char,
+            beam_size=beam_size)
         output_words = output_words[0:-1]
         output_sentence = ' '.join(output_words)
         print('gt_words:', gt_words)
@@ -200,13 +192,12 @@ def evaluateBLEU(encoder, decoder, pairs,
             print('>', pair[0])
             print('=', pair[1])
             print('<', output_sentence)
-            print('Instance BLEU Score: {:.2f}'.format(score))
+            print('Instance BLEU Score: {:.4f}'.format(score))
             print('')
     avg_score = np.mean(scores)
-    print('Test BLEU Score: {:.2f}'.format(avg_score))
-    print('err_count: {}'.format(err_count))
+    print('Test BLEU Score: {:.4f}'.format(avg_score))
     return avg_score
- 
+
 
 def visAttention():
     output_words, attentions = evaluate(
@@ -238,25 +229,30 @@ def showAttention(input_sentence, output_words, attentions,
 def evaluateAndShowAttention(input_sentence, encoder, 
                              attn_decoder, save_path,
                              input_lang, output_lang,
-                             input_use_char=False):
+                             input_use_char=False,
+                             beam_size=1):
     output_words, attentions = evaluate(
         encoder, attn_decoder, input_sentence,
-        input_lang, output_lang, input_use_char=input_use_char)
+        input_lang, output_lang, input_use_char=input_use_char,
+        beam_size=beam_size)
     print('input =', input_sentence)
     print('output =', ' '.join(output_words))
     showAttention(input_sentence, output_words, attentions, save_path)
     
 
 def evalAndShowAttns(encoder, attn_decoder, output_dir, 
-                     input_lang, output_lang, input_use_char=False):
+                     input_lang, output_lang, input_use_char=False,
+                     beam_size=1):
     encoder.eval()
     attn_decoder.eval()
     os.makedirs(output_dir, exist_ok=True)
     for i, sentence in enumerate(demo_french_sentences):
-        save_path = os.path.join(output_dir, '{}.png'.format(i))
+        save_path = os.path.join(
+            output_dir, 'pair{}_beamsize{}.png'.format(i, beam_size))
         evaluateAndShowAttention(
             sentence, encoder, attn_decoder, save_path,
-            input_lang, output_lang, input_use_char=input_use_char)
+            input_lang, output_lang, input_use_char=input_use_char,
+            beam_size=beam_size)
 
 
 def load_model(encoder, decoder, output_dir):

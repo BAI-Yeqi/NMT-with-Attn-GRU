@@ -42,8 +42,8 @@ def main(args):
         print_utterance=True, beam_size=args.beam_size)
     evalAndShowAttns(
         encoder1, attn_decoder1, args.output_dir,
-        input_lang, output_lang,
-        input_use_char=input_use_char)
+        input_lang, output_lang, input_use_char=input_use_char,
+        beam_size=args.beam_size)
 
 
 def parse_args():
