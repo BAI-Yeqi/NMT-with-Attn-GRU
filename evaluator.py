@@ -21,7 +21,7 @@ from utils import demo_french_sentences
 from model import device
 
 
-def evaluate(encoder, decoder, sentence, 
+def evaluate(encoder, decoder, sentence,
              input_lang, output_lang, max_length=MAX_LENGTH,
              input_use_char=False, beam_size=1):
     with torch.no_grad():
@@ -88,8 +88,8 @@ def evaluate(encoder, decoder, sentence,
                 beam_decoder_outputs = []
                 for b in range(beam_size):
                     decoder_output, decoder_hidden, decoder_attention = decoder(
-                        beam_word_id_seqs[b][-1], 
-                        beam_prev_hidden_states[b], 
+                        beam_word_id_seqs[b][-1],
+                        beam_prev_hidden_states[b],
                         encoder_outputs)
                     beam_decoder_attentions[b][di] = decoder_attention.data
                     beam_prev_hidden_states[b] = decoder_hidden.clone().detach()
@@ -126,7 +126,7 @@ def evaluate(encoder, decoder, sentence,
                         decoded_words.append(output_lang.index2word[word_id.item()])
                     break
             return decoded_words, beam_decoder_attentions[0][:di + 1]
-                
+
 
 def evaluateRandomly(encoder, decoder, pairs,
                      input_lang, output_lang, n=10,
@@ -136,7 +136,7 @@ def evaluateRandomly(encoder, decoder, pairs,
         print('>', pair[0])
         print('=', pair[1])
         output_words, attentions = evaluate(
-            encoder, decoder, pair[0], 
+            encoder, decoder, pair[0],
             input_lang, output_lang,
             input_use_char=input_use_char)
         output_sentence = ' '.join(output_words)
@@ -176,13 +176,13 @@ def evaluateBLEU(encoder, decoder, pairs,
     return avg_score
 
 
-def visAttention():
+def visAttention(encoder, decoder):
     output_words, attentions = evaluate(
-        encoder1, attn_decoder1, "je suis trop froid .")
+        encoder, decoder, "je suis trop froid .")
     plt.matshow(attentions.numpy())
 
 
-def showAttention(input_sentence, output_words, attentions, 
+def showAttention(input_sentence, output_words, attentions,
                   save_path, show=False):
     # Set up figure with colorbar
     fig = plt.figure()
@@ -203,7 +203,7 @@ def showAttention(input_sentence, output_words, attentions,
         plt.show()
 
 
-def evaluateAndShowAttention(input_sentence, encoder, 
+def evaluateAndShowAttention(input_sentence, encoder,
                              attn_decoder, save_path,
                              input_lang, output_lang,
                              input_use_char=False,
@@ -215,9 +215,9 @@ def evaluateAndShowAttention(input_sentence, encoder,
     print('input =', input_sentence)
     print('output =', ' '.join(output_words))
     showAttention(input_sentence, output_words, attentions, save_path)
-    
 
-def evalAndShowAttns(encoder, attn_decoder, output_dir, 
+
+def evalAndShowAttns(encoder, attn_decoder, output_dir,
                      input_lang, output_lang, input_use_char=False,
                      beam_size=1):
     encoder.eval()

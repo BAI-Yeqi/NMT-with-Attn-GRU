@@ -6,7 +6,6 @@ email: yeqi001@ntu.edu.sg
 '''
 
 
-import torch
 import os
 import argparse
 from dataset import prepareData
@@ -21,7 +20,7 @@ def main(args):
     hidden_size = args.word_dim + args.char_dim
     input_use_char = bool(args.char_dim)
     encoder1 = EncoderRNN(
-        input_lang.n_words, args.word_dim, 
+        input_lang.n_words, args.word_dim,
         args.char_dim, input_lang.n_chars
     ).to(device)
     attn_decoder1 = AttnDecoderRNN(
@@ -68,8 +67,8 @@ def parse_args():
     os.makedirs('./output', exist_ok=True)
     args.output_dir = os.path.join('./output', args.model_name)
     return args
-    
+
 
 if __name__ == '__main__':
     args = parse_args()
-    main(args) 
+    main(args)

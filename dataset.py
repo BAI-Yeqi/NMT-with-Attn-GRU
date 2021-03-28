@@ -9,7 +9,6 @@ email: yeqi001@ntu.edu.sg
 from __future__ import unicode_literals, print_function, division
 from io import open
 import unicodedata
-import string
 import re
 import random
 from sklearn.model_selection import train_test_split
@@ -146,7 +145,6 @@ def prepareData(lang1, lang2, reverse=False):
 if __name__ == '__main__':
     # Unit test
     import torch
-    import numpy as np
     from trainer import charIndexsFromSentence, tensorsFromPair
 
     input_lang, output_lang, train_pairs, test_pairs = prepareData('eng', 'fra', True)
@@ -160,6 +158,6 @@ if __name__ == '__main__':
     print(seq_char_ids, seq_char_ids.shape)
     input_tensor, input_char_tensor, target_tensor = \
         tensorsFromPair(pair, input_lang, output_lang, input_use_char=True)
-    print(input_tensor.shape, 
-          input_char_tensor.shape, 
+    print(input_tensor.shape,
+          input_char_tensor.shape,
           target_tensor.shape)

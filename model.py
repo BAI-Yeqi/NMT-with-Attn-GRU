@@ -8,7 +8,6 @@ email: yeqi001@ntu.edu.sg
 
 import torch
 import torch.nn as nn
-from torch import optim
 import torch.nn.functional as F
 from dataset import MAX_LENGTH
 
