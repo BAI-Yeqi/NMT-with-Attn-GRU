@@ -1,5 +1,5 @@
 # NMT-with-Attn-GRU
-Neural Machine Translation with Attentive GRU
+This repo is a clean, readable, and easy-to-use implementation of Neural Machine Translation with Attentive GRU, which supports teacher forcing and Beam Search decoding.
 
 ## Environment Setup
 1. In a Python 3.6 environment, install PyTorch according to official website: https://pytorch.org/get-started/locally/
